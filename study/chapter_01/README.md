@@ -48,3 +48,161 @@
 * 처음에 언급되었던 도메인 모델은 도메인 자체를 이해하는 데 필요한 개념 모델을 의미했다.
 * 지금 살펴볼 도메인 모델은 아키텍처 상의 도메인 계층을 객체 지향 기법으로 현하는 패턴을 말한다.
 * 도메인 계층은 도메인의 핵심 규칙을 구현한다.
+* 핵심 규칙을 구현한 코드는 도메인 모델에만 위치하기 때문에 규칙이 바뀌거나 규칙을 확장해야 할 때 다른 코드에 영향을 덜 주고 변경 내역을 모델에 반영할 수 있게 된다.
+
+### 주문 도메인을 구현해보자
+> * 출고 전에 배송지를 변경할 수 있다.
+> * 주문 취소는 배송 전에만 할 수 있다.
+
+```java
+public class Order {
+    private ShippingInfo shippingInfo;
+    private OrderState orderState;
+
+    public Order() {}
+
+    public Order(ShippingInfo shippingInfo, OrderState orderState) {
+        this.shippingInfo = shippingInfo;
+        this.orderState = orderState;
+    }
+
+    public ShippingInfo getShippingInfo() {
+        return shippingInfo;
+    }
+
+    public OrderState getOrderState() {
+        return orderState;
+    }
+
+    public void changeShippingInfo(ShippingInfo shippingInfo) {
+        if (orderState.isAfterDelivered()) {
+            throw new IllegalArgumentException("이미 배송되어 배송지 변경이 불가능합니다.");
+        }
+        this.shippingInfo = shippingInfo;
+    }
+
+    public void cancel() {
+        if (orderState.isAfterDelivered()) {
+            throw new IllegalArgumentException("배송된 이후에는 주문을 취소할 수 없습니다.");
+        }
+        orderState = OrderState.CANCELED;
+    }
+}
+
+public enum OrderState {
+    PAYMENT_WAITING {
+        @Override
+        public boolean isAfterDelivered() {
+            return false;
+        }
+    },
+    PREPARING {
+        @Override
+        public boolean isAfterDelivered() {
+            return false;
+        }
+    },
+    DELIVERING,
+    DELIVERY_COMPLETED,
+    CANCELED;
+
+    public boolean isAfterDelivered() {
+        return true;
+    }
+}
+
+public class ShippingInfo {
+    private final String zipCode;
+    private final String address;
+    private final String receiverName;
+    private final String receiverPhoneNumber;
+
+    public ShippingInfo(String zipCode, String address, String receiverName, String receiverPhoneNumber) {
+        this.zipCode = zipCode;
+        this.address = address;
+        this.receiverName = receiverName;
+        this.receiverPhoneNumber = receiverPhoneNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ShippingInfo that = (ShippingInfo) o;
+        return Objects.equals(zipCode, that.zipCode) && Objects.equals(address, that.address) && Objects.equals(receiverName, that.receiverName) && Objects.equals(receiverPhoneNumber, that.receiverPhoneNumber);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(zipCode, address, receiverName, receiverPhoneNumber);
+    }
+}
+```
+```java
+class OrderTest {
+
+    @Test
+    void 주문은_출고전에_배송지를_변경할_수_있다() {
+        // given
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PREPARING;
+        Order order = new Order(shippingInfo, currentOrderState);
+
+        // when
+        order.changeShippingInfo(shippingInfo);
+
+        // then
+        assertThat(order.getShippingInfo()).isEqualTo(shippingInfo);
+    }
+
+    @Test
+    void 주문은_출고되면_배송지를_변경할_수_없다() {
+        // given
+        ShippingInfo beforeShippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+
+        ShippingInfo changeShippingInfo = new ShippingInfo("222222", "대전", "자바", "01056785678");
+        OrderState currentOrderState = OrderState.DELIVERING;
+        Order order = new Order(beforeShippingInfo, currentOrderState);
+
+        // when
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> order.changeShippingInfo(changeShippingInfo)
+        );
+
+        // then
+        assertThat(order.getShippingInfo()).isEqualTo(beforeShippingInfo);
+    }
+
+    @Test
+    void 주문은_출고전에_취소할_수_있다() {
+        // given
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PREPARING;
+        Order order = new Order(shippingInfo, currentOrderState);
+
+        // when
+        order.cancel();
+
+        // then
+        assertThat(order.getOrderState()).isEqualTo(OrderState.CANCELED);
+    }
+
+    @Test
+    void 주문은_출고된_이후에는_취소할_수_없다() {
+        // given
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.DELIVERING;
+        Order order = new Order(shippingInfo, currentOrderState);
+
+        // when
+        assertThrows(
+                IllegalArgumentException.class,
+                order::cancel
+        );
+
+        // then
+        assertThat(order.getOrderState()).isEqualTo(OrderState.DELIVERING);
+    }
+}
+```
