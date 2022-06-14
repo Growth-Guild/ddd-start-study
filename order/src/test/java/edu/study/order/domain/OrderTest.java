@@ -2,6 +2,10 @@ package edu.study.order.domain;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -12,7 +16,9 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PREPARING;
-        Order order = new Order(shippingInfo, currentOrderState);
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
         // when
         order.changeShippingInfo(shippingInfo);
@@ -28,7 +34,9 @@ class OrderTest {
 
         ShippingInfo changeShippingInfo = new ShippingInfo("222222", "대전", "자바", "01056785678");
         OrderState currentOrderState = OrderState.DELIVERING;
-        Order order = new Order(beforeShippingInfo, currentOrderState);
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        Order order = new Order(beforeShippingInfo, currentOrderState, orderLines);
 
         // when
         assertThrows(
@@ -45,7 +53,9 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PREPARING;
-        Order order = new Order(shippingInfo, currentOrderState);
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
         // when
         order.cancel();
@@ -59,7 +69,9 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.DELIVERING;
-        Order order = new Order(shippingInfo, currentOrderState);
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
         // when
         assertThrows(
@@ -69,5 +81,39 @@ class OrderTest {
 
         // then
         assertThat(order.getOrderState()).isEqualTo(OrderState.DELIVERING);
+    }
+
+    @Test
+    void 주문은_최소_한_종류_이상의_상품을_주문해야_한다() {
+        // given
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PAYMENT_WAITING;
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        // when
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
+
+        // then
+        assertThrows(IllegalArgumentException.class, () -> new Order(shippingInfo, currentOrderState, Collections.emptyList()));
+        assertThat(order.getOrderLines().size()).isGreaterThan(0);
+    }
+
+    @Test
+    void 총_주문_금액은_각_상품의_구매_가격을_모두_더한_값이다() {
+        // given
+        List<OrderLine> orderLines = Arrays.asList(
+                new OrderLine(new Product(), 1000, 5),
+                new OrderLine(new Product(), 500, 3),
+                new OrderLine(new Product(), 300, 10)
+        );
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PAYMENT_WAITING;
+        int expectedTotalAmounts = orderLines.stream().mapToInt(OrderLine::getAmounts).sum();
+
+        // when
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
+
+        // then
+        assertThat(order.getTotalAmounts()).isEqualTo(expectedTotalAmounts);
     }
 }

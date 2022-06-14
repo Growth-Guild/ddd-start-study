@@ -13,6 +13,7 @@ public enum OrderState {
             return false;
         }
     },
+    SHIPPED,
     DELIVERING,
     DELIVERY_COMPLETED,
     CANCELED;

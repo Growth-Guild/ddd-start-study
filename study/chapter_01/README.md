@@ -206,3 +206,105 @@ class OrderTest {
     }
 }
 ```
+
+## 1.5 도메인 모델 도출
+* 도메인을 모델링할 때 기본이 되는 작업은 모델을 구성하는 핵심 구성요소, 규칙, 기능을 찾는 것이다.
+* 도메인 모델 패턴은 개발을 진행함에 따라 도메인에 대한 이해도가 더 깊어지기 마련이다.
+* 도메인을 구현하다 보면 특정 조건이나 상태에 따라 제약이나 규칙이 달리 적용되는 경우가 많다.
+* 더 깊어진 도메인 지식을 바탕으로 도메인의 핵심 규칙이 코드에 잘 드러나도록 지속적인 개선이 필요하다.
+
+### 요구사항 정리
+> * 최소 한 종류 이상의 상품을 주문해야 한다.
+> * 한 상품을 한 개 이상 주문할 수 있다.
+> * 총 주문 금액은 각 상품의 구매 가격 합을 모두 더한 금액이다.
+> * 각 상품의 구매 가격 합은 상품 가격에 구매 개수를 곱한 값이다.
+> * 주문할 때 배송지 정보를 반드시 지정해야 한다.
+> * 배송지 정보는 받는 사람 이름, 전화번호, 주소로 구성된다.
+> * 출고를 하면 배송지를 변경할 수 없다.
+> * 출고 전에 주문을 취소할 수 없다.
+> * 고객이 결제를 완료하기 전에는 상품을 준비하지 않는다.
+
+```java
+// 최소 한 종류 이상의 상품을 주문해야 한다.
+class OrderTest {
+    @Test
+    void 주문은_최소_한_종류_이상의_상품을_주문해야_한다() {
+        // given
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PAYMENT_WAITING;
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+
+        // when
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
+
+        // then
+        assertThrows(IllegalArgumentException.class, () -> new Order(shippingInfo, currentOrderState, Collections.emptyList()));
+        assertThat(order.getOrderLines().size()).isGreaterThan(0);
+    }
+}
+```
+
+```java
+// 한 상품을 한 개 이상 주문할 수 있다.
+class OrderLineTest {
+    
+    @Test
+    void 상품은_최소_하나_이상_구매할_수_있다() {
+        // given
+        int price = 100;
+        int quantity = 1;
+
+        // when
+        OrderLine orderLine = new OrderLine(new Product(), price, quantity);
+
+        // then
+        assertThat(orderLine.getPrice()).isEqualTo(price);
+        assertThat(orderLine.getQuantity()).isEqualTo(quantity);
+        assertThrows(IllegalArgumentException.class, () -> new OrderLine(new Product(), 1000, 0));
+    }
+
+    @Test
+    void 주문상품의_가격은_수량과_곱한_값과_같다() {
+        // given
+        int price = 500;
+        int quantity = 5;
+        OrderLine orderLine = new OrderLine(new Product(), price, quantity);
+
+        // when
+        int amounts = orderLine.getAmounts();
+
+        // then
+        assertThat(amounts).isEqualTo(price * quantity);
+    }
+}
+```
+
+```java
+// 총 주문 금액은 각 상품의 구매 가격 합을 모두 더한 금액이다.
+class OrderTest {
+    
+    @Test
+    void 총_주문_금액은_각_상품의_구매_가격을_모두_더한_값이다() {
+        // given
+        List<OrderLine> orderLines = Arrays.asList(
+                new OrderLine(new Product(), 1000, 5),
+                new OrderLine(new Product(), 500, 3),
+                new OrderLine(new Product(), 300, 10)
+        );
+        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        OrderState currentOrderState = OrderState.PAYMENT_WAITING;
+        int expectedTotalAmounts = orderLines.stream().mapToInt(OrderLine::getAmounts).sum();
+
+        // when
+        Order order = new Order(shippingInfo, currentOrderState, orderLines);
+
+        // then
+        assertThat(order.getTotalAmounts()).isEqualTo(expectedTotalAmounts);
+    }
+}
+```
+
+### 문서화
+* 문서화를 하는 주된 이유는 지식을 공유하기 위함이다.
+* 전반적인 기능 목록이나 모듈 구조, 빌드 과정은 코드를 보고 직접 이해하는 것보다 사우이 수준에서 정리한 문서를 참조하는 것이 소프트웨어 전반을 빠르게 이해하는 데 도움이 된다.
+* 코드를 보면서 도메인을 깊게 이해하게 되므로 코드 자체도 문서화의 대상이 된다. 코드는 도메인 지식이 잘 드러나도록 작성해야한다.
