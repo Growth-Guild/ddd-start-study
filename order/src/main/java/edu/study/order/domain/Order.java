@@ -1,8 +1,10 @@
 package edu.study.order.domain;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Order {
+    private String orderNumber;
     private ShippingInfo shippingInfo;
     private OrderState orderState;
     private List<OrderLine> orderLines;
@@ -17,6 +19,11 @@ public class Order {
         this.orderState = orderState;
         this.orderLines = orderLines;
         calculateTotalAmounts();
+    }
+
+    public Order(String orderNumber, ShippingInfo shippingInfo, OrderState orderState, List<OrderLine> orderLines) {
+        this(shippingInfo, orderState, orderLines);
+        this.orderNumber = orderNumber;
     }
 
     private void verifyOrderLineIsMoreThanOne(List<OrderLine> orderLines) {
@@ -57,5 +64,18 @@ public class Order {
 
     public int getTotalAmounts() {
         return totalAmounts;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Order order = (Order) o;
+        return Objects.equals(orderNumber, order.orderNumber);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderNumber);
     }
 }
