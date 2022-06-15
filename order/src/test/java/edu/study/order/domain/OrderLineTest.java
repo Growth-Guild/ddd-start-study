@@ -17,7 +17,7 @@ class OrderLineTest {
         OrderLine orderLine = new OrderLine(new Product(), price, quantity);
 
         // then
-        assertThat(orderLine.getPrice()).isEqualTo(price);
+        assertThat(orderLine.getPrice()).isEqualTo(new Money(price));
         assertThat(orderLine.getQuantity()).isEqualTo(quantity);
         assertThrows(IllegalArgumentException.class, () -> new OrderLine(new Product(), 1000, 0));
     }
@@ -30,9 +30,9 @@ class OrderLineTest {
         OrderLine orderLine = new OrderLine(new Product(), price, quantity);
 
         // when
-        int amounts = orderLine.getAmounts();
+        Money amounts = orderLine.getAmounts();
 
         // then
-        assertThat(amounts).isEqualTo(price * quantity);
+        assertThat(amounts).isEqualTo(new Money(price * quantity));
     }
 }

@@ -16,7 +16,7 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PREPARING;
-        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
 
         Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
@@ -34,7 +34,7 @@ class OrderTest {
 
         ShippingInfo changeShippingInfo = new ShippingInfo("222222", "대전", "자바", "01056785678");
         OrderState currentOrderState = OrderState.DELIVERING;
-        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
 
         Order order = new Order(beforeShippingInfo, currentOrderState, orderLines);
 
@@ -53,7 +53,7 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PREPARING;
-        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
 
         Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
@@ -69,7 +69,7 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.DELIVERING;
-        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
 
         Order order = new Order(shippingInfo, currentOrderState, orderLines);
 
@@ -88,7 +88,7 @@ class OrderTest {
         // given
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PAYMENT_WAITING;
-        List<OrderLine> orderLines = Arrays.asList(new OrderLine());
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
 
         // when
         Order order = new Order(shippingInfo, currentOrderState, orderLines);
@@ -108,7 +108,7 @@ class OrderTest {
         );
         ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PAYMENT_WAITING;
-        int expectedTotalAmounts = orderLines.stream().mapToInt(OrderLine::getAmounts).sum();
+        int expectedTotalAmounts = orderLines.stream().mapToInt(v -> v.getAmounts().getValue()).sum();
 
         // when
         Order order = new Order(shippingInfo, currentOrderState, orderLines);

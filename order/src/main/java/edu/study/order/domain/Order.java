@@ -33,7 +33,7 @@ public class Order {
     }
 
     private void calculateTotalAmounts() {
-        this.totalAmounts = orderLines.stream().mapToInt(OrderLine::getAmounts).sum();
+        this.totalAmounts = orderLines.stream().mapToInt(v -> v.getAmounts().getValue()).sum();
     }
 
     public ShippingInfo getShippingInfo() {

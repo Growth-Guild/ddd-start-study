@@ -315,3 +315,60 @@ class OrderTest {
 * 엔티티는 식별자를 가진다.
 * 식별자는 엔티티 객체마다 고유해서 각 엔티티는 서로 다른 식별자를 갖는다.
 * 엔티티의 식별자는 바뀌지 않고 고유하기 때문에 두 엔티티 객체의 식별자가 같으면 두 엔티티는 같다고 판단할 수 있다.
+
+### 밸류
+* 밸류 타입은 개념적으로 완전한 하나를 표현할 때 사용한다.
+* 밸류 타입은 꼭 두 개 이상의 데이터를 가져야 하는 것은 아니다. 의미를 명확하게 표현하기 위해 밸류 타입을 사용하는 경우도 있다.
+
+```java
+public class OrderLine {
+    private Product product;
+    private int price;
+    private int quantity;
+}
+```
+* OrderLine의 price는 int 타입이지만 밸류 타입을 통해 돈이라는 의미를 부여할 수 있도록 Money 타입을 생성하여 가독성을 높일 수 있다.
+```java
+public class Money {
+    private final int value;
+
+    public Money(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public Money add(Money money) {
+        return new Money(this.value + money.value);
+    }
+
+    public Money multiply(int quantity) {
+        return new Money(value * quantity);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Money money = (Money) o;
+        return value == money.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+}
+```
+* 밸류 객체의 데이터를 변경할 때는 기존 데이터를 변경하는 것보다 변경한 데이터를 갖는 새로운 밸류 객체를 생성하는 방식이 좋다.
+* 밸류 타입을 불변으로 구현하는 이유는 참조 투명성과 스레드에 안전한 코드를 작성하기 위함이다.
+* 밸류 타입 클래스는 equals()와 hashCode()를 구현해주는 것이 좋다.
+
+### 엔티티 식별자와 밸류 타입
+* 단순히 리터럴 값이 아닌, 밸류 타입을 이용하여 해당 값에 의미를 부여하면 가독성이 늘어난다.
+
+### 도메인 모델에 set 메서드 넣지 않기
+* setter는 도메인의 핵심 개념이 드러나지 않는다.
+* 도메인 객체를 생성할 때 온전하지 않은 상태가 될 수 있다.
