@@ -144,15 +144,19 @@ class OrderTest {
     @Test
     void 주문은_출고전에_배송지를_변경할_수_있다() {
         // given
-        ShippingInfo shippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
+        ShippingInfo givenShippingInfo = new ShippingInfo("111111", "서울", "자바", "01012341234");
         OrderState currentOrderState = OrderState.PREPARING;
-        Order order = new Order(shippingInfo, currentOrderState);
+        List<OrderLine> orderLines = Arrays.asList(new OrderLine(null, 1000, 5));
+
+        ShippingInfo changedShippingInfo = new ShippingInfo("222222", "대전", "코틀린", "01056785678");
+
+        Order order = new Order(givenShippingInfo, currentOrderState, orderLines);
 
         // when
-        order.changeShippingInfo(shippingInfo);
+        order.changeShippingInfo(changedShippingInfo);
 
         // then
-        assertThat(order.getShippingInfo()).isEqualTo(shippingInfo);
+        assertThat(order.getShippingInfo()).isEqualTo(changedShippingInfo);
     }
 
     @Test
