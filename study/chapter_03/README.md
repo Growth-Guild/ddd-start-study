@@ -38,3 +38,58 @@
 * 한 트랜잭션에서 한 애그리거트만 수정한다는 것은 애그리거트에서 다른 애그리거트를 변경하지 않는다는 것을 의미한다.
 * 애그리거트는 최대한 서로 독립적이어야 한다.
 * 도메인 이벤트를 사용하면 한 트랜잭션에서 한 개의 애그리거트를 수정하면서도 동기나 비동기로 다른 애그리거트의 상태를 변경하는 코드를 작성할 수 있다.
+
+## 3.3 리포지토리와 애그리거트
+* 애그리거트는 개념상 완전한 한 개의 도메인 모델을 표현하므로 객체의 영속성을 처리하는 리포지토리는 애그리거트 단위로 존재한다.
+* 애그리거트는 개념적으로 하나이므로 리포지토리는 애그리거트 전체를 저장소에 영속화해야 한다.
+
+## 3.4 ID를 이용한 애그리거트 참조
+* 애그리거트에서 다른 애그리거트를 참조한다는 것은 다른 애그리거트의 루트를 참조한다는 것과 같다.
+
+### 외부 애그리거트를 참조하는 것에 대해서..
+```text
+order.getOrderer().getMember().getId();
+```
+* Order라는 애그리거트에서 엔티티 그래프를 통해서 다른 애그리거트인 Member를 직접 접근하고 있다.
+  * Order 애그리거트가 Member 애그리거트의 영역에 침범한 것이다.
+* 위와 같은 코드는 다른 애그리거트와의 결합도가 발생하여 확장의 어려움을 야기할 수 있다.
+* 이를 해결하기 위해서 애그리거트 루트의 식별자인 Id 값을 참조하도록 하는 것이다.
+```java
+public class Order {
+    private Orderer orderer;
+}
+
+public class Orderer {
+    private MemberId memberId;
+    private String name;
+}
+```
+```java
+public class Member {
+    private MemberId id;
+    // ...
+}
+```
+* 애그리거트가 다른 애그리거트를 직접 참조하지 않고 식별자를 통해서 참조하도록 하면 애그리거트 간의 물리적 연결을 제거할 수 있다.
+
+```text
+Member member = memberRepository.findById(order.getOrderer().getMemberId());
+```
+* 책에서는 Member 애그리거트를 식별자를 통해서 가져오도록 했지만 'order.getOrderer().getMemberId()' 코드가 좋은 코드인지는 잘 모르겠다.
+* Order라는 엔티티를 캡슐화 해놓고 자신의 내부 정보를 응용 계층에 전부 드러내고 있기 때문이다.
+
+```java
+public class Order {
+    private Orderer orderer;
+    
+    public Long getOrdererId() {
+        return orderer.getMemberId().value;
+    }
+}
+```
+* 위와 같이 'order.getOrdererId()' 정도로 작성하는건 어떨까 싶은 생각이 든다.
+
+### 애그리거트 저장소의 분산
+* 시스템이 커지고 애그리거트 별로 다른 기술을 사용한다면 한 번의 쿼리로 관련 애그리거트를 조회할 수 없다.
+* 이런 문제를 해결하기 위해 캐시를 활용하거나 조회 전용 저장소를 따로 구성하면 코드의 복잡성은 올라갈 수 있지만 시스템의 처리량을 높일 수 있다.
+* 명령 모델과 조회 전용 모델을 분리하는 패턴으로 CQRS가 있다.

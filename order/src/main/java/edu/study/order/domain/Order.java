@@ -5,6 +5,7 @@ import java.util.Objects;
 
 public class Order {
     private String orderNumber;
+    private Orderer orderer;
     private ShippingInfo shippingInfo;
     private OrderState orderState;
     private List<OrderLine> orderLines;
@@ -24,6 +25,11 @@ public class Order {
     public Order(String orderNumber, ShippingInfo shippingInfo, OrderState orderState, List<OrderLine> orderLines) {
         this(shippingInfo, orderState, orderLines);
         this.orderNumber = orderNumber;
+    }
+
+    public Order(String orderNumber, ShippingInfo shippingInfo, OrderState orderState, List<OrderLine> orderLines, Orderer orderer) {
+        this(orderNumber, shippingInfo, orderState, orderLines);
+        this.orderer = orderer;
     }
 
     private void verifyOrderLineIsMoreThanOne(List<OrderLine> orderLines) {
